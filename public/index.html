@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+player.seekTo(target, true);
+player.playVideo();
+} else if (action === 'pause') {
+player.seekTo(time, true);
+player.pauseVideo();
+} else if (action === 'seek') {
+player.seekTo(time, true);
+}
+setTimeout(() => { isSeekingFromNetwork = false; }, 300);
+});
+
+
+socket.on('chat', ({ name, text, at }) => {
+const d = new Date(at || Date.now());
+appendChat(`<strong>${name || 'Guest'}:</strong> ${text} <span class="text-gray-400">${d.toLocaleTimeString()}</span>`);
+});
+
+
+socket._wired = true;
+}
+};
+
+
+document.getElementById('loadBtn').onclick = () => {
+if (!currentRoom || !socket) return alert('Join a room first');
+const url = document.getElementById('youtubeUrl').value.trim();
+const id = parseYouTubeId(url);
+if (!id) return alert('Invalid YouTube URL or ID');
+socket.emit('setVideo', { roomId: currentRoom, videoId: id });
+};
+
+
+document.getElementById('takeControlBtn').onclick = () => {
+if (!currentRoom || !socket) return alert('Join a room first');
+socket.emit('requestController', { roomId: currentRoom });
+};
+
+
+document.getElementById('playBtn').onclick = () => {
+if (!player) return;
+// Triggering play will be caught by onPlayerStateChange and broadcast if controller
+player.playVideo();
+};
+
+
+document.getElementById('pauseBtn').onclick = () => {
+if (!player) return;
+player.pauseVideo();
+};
+
+
+document.getElementById('seekBackBtn').onclick = () => smartSeek(-10);
+document.getElementById('seekFwdBtn').onclick = () => smartSeek(10);
+
+
+function smartSeek(delta) {
+if (!currentRoom || !socket || !player) return;
+const isController = socket.id === controllerId || controllerId === null;
+const t = (player.getCurrentTime?.() || 0) + delta;
+if (isController) {
+socket.emit('control', { roomId: currentRoom, action: 'seek', time: Math.max(0, t) });
+} else {
+alert('Only controller can seek. Click "Take Control".');
+}
+}
+
+
+document.getElementById('sendBtn').onclick = () => {
+if (!currentRoom || !socket) return alert('Join a room first');
+const text = document.getElementById('chatInput').value.trim();
+const name = document.getElementById('displayName').value.trim() || 'Guest';
+if (!text) return;
+socket.emit('chat', { roomId: currentRoom, text, name });
+document.getElementById('chatInput').value = '';
+};
+
+
+function updateRoleHint() {
+const meIsController = socket?.id && (socket.id === controllerId || controllerId === null);
+document.getElementById('roleHint').textContent = meIsController ?
+'You are the controller for this room. Your play/pause/seek actions sync to everyone.' :
+'Viewer mode. Ask for control to sync your actions for everyone.';
+}
+</script>
+</body>
+</html>
