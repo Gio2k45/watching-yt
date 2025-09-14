@@ -1,0 +1,14 @@
+services:
+- type: web
+name: youtube-watch-party
+runtime: node
+region: singapore
+plan: free # hoặc starter/standard
+buildCommand: npm install
+startCommand: node server.js
+autoDeploy: true
+envVars:
+- key: NODE_ENV
+value: production
+- key: NODE_VERSION
+value: 20.11.1
